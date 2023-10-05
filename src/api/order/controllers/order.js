@@ -20,7 +20,7 @@ const { createCoreController } = require("@strapi/strapi").factories;
 
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
   async paymentOrder(ctx) {
-    const { token, products, idUser, addressShipping } = ctx.body;
+    const { token, products, idUser, addressShipping } = ctx.request.body;
 
     let totalPayment = 0;
 
@@ -30,15 +30,17 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
         product.attributes.discount
       );
 
-      totalPayment += Number(priceTemp) * product.attributes.quantity;
+      totalPayment += Number(priceTemp) * product.quantity;
     });
 
-    const charge = stripe.charges.create({
+    const charge = await stripe.charges.create({
       amount: Math.round(totalPayment * 100),
       currency: "usd",
       source: token.id,
-      description: `User ID: ${idUser}`,
+      description: `UserID: ${idUser}`,
     });
+
+    console.log("console.log" + charge)
 
     const data = {
       products,
